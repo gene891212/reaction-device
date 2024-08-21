@@ -98,27 +98,41 @@ void loop() {
     FastLED.show();
   }
 
-  if (timing && digitalRead(buttonPin) == HIGH) {
-    timing = false;
+  if (timing) {
     unsigned long reaction = millis() - startTime;
-    // handle overflow: not press the button
-    if (reaction >= 5000)
-      reaction = 65535;
-    else
-      reactionTime[count] = reaction;
-    count++;
+  
+    if (digitalRead(buttonPin) == HIGH) {
+      timing = false;
+      reactionTime[count] = reaction; // 記錄反應時間
+      pReactionCh->setValue((uint8_t *)&reaction, sizeof(reaction));
+      pReactionCh->notify();
 
-    pReactionCh->setValue((uint8_t *)&reaction, sizeof(reaction));
-    pReactionCh->notify();
+      digitalWrite(ledPin, LOW);
+      leds[0] = CRGB::Black;
+      FastLED.show();
+  
+      count++;
+    } else if (reaction >= 6000) {
+      // handle overflow: not press the button
+      reaction = 6000;
 
-    digitalWrite(ledPin, LOW);
-    leds[0] = CRGB::Black;
-    FastLED.show();
+      timing = false;
+      reactionTime[count] = reaction; // 記錄反應時間
+      pReactionCh->setValue((uint8_t *)&reaction, sizeof(reaction));
+      pReactionCh->notify();
+
+      digitalWrite(ledPin, LOW);
+      leds[0] = CRGB::Black;
+      FastLED.show();
+
+      count++;
+    }
 
     delay(1000);  // 停止一秒鐘以避免錯誤的按鈕觸發
-    if (count == NUM_REACTIONS) {
-      endGame();
-    }
+  }
+
+  if (count == NUM_REACTIONS) {
+    endGame();
   }
 }
 
