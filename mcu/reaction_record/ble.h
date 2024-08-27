@@ -16,11 +16,13 @@
 #define SERVICE_UUID "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
 #define REACTION_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
 #define MAX3010X_UUID "d2912856-de63-11ed-b5ea-0242ac120002"
+#define SRARTGAME_UUID "d2912856-de63-11ed-b5ea-0242ac120001"
 
 BLEServer* pServer;
 BLEService* pService;
 BLECharacteristic* pReactionCh;
 BLECharacteristic* pMax3010xCh;
+BLECharacteristic* pStartgameCh;
 bool deviceConnected = false;
 
 
@@ -50,7 +52,10 @@ void setupBLE() {
     MAX3010X_UUID,
     BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE | BLECharacteristic::PROPERTY_NOTIFY | BLECharacteristic::PROPERTY_INDICATE);
   pMax3010xCh->addDescriptor(new BLE2902());
-
+  pStartgameCh = pService->createCharacteristic(
+    SRARTGAME_UUID,
+    BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE | BLECharacteristic::PROPERTY_NOTIFY | BLECharacteristic::PROPERTY_INDICATE);
+  pStartgameCh->addDescriptor(new BLE2902());
   pService->start();
 
   // Start advertising

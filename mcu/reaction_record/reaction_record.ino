@@ -1,3 +1,10 @@
+/*********************************************************************
+ * @file    reaction_record.ino
+ * @brief   反應時間測試
+ * @note    TODO: 1. button debounce
+ *                2. remove delay
+ *********************************************************************/
+
 #include <FastLED.h>
 #include "ble.h"
 #include "max3010x.h"
@@ -23,11 +30,13 @@ uint32_t tsLastReport = 0;
 
 extern BLECharacteristic *pReactionCh;
 extern BLECharacteristic *pMax3010xCh;
+extern BLECharacteristic *pStartgameCh;
 
 void setup() {
   Serial.begin(115200);
 
   FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, NUM_LEDS);  // GRB ordering is assumed
+  FastLED.setBrightness(50);
 
   Serial.println("[INFO] Initializing BLE work!");
   setupBLE();
@@ -80,8 +89,10 @@ void loop() {
 
 
   if (!gameStarted && digitalRead(buttonPin) == HIGH) {
+    resetGame();
+
     gameStarted = true;
-    delay(500);  // 避免按鈕彈跳
+    delay(500);
     startGame();
 
     delay(1000);
@@ -100,24 +111,24 @@ void loop() {
 
   if (timing) {
     unsigned long reaction = millis() - startTime;
-  
+
     if (digitalRead(buttonPin) == HIGH) {
       timing = false;
-      reactionTime[count] = reaction; // 記錄反應時間
+      reactionTime[count] = reaction;  // 記錄反應時間
       pReactionCh->setValue((uint8_t *)&reaction, sizeof(reaction));
       pReactionCh->notify();
 
       digitalWrite(ledPin, LOW);
       leds[0] = CRGB::Black;
       FastLED.show();
-  
+
       count++;
     } else if (reaction >= 6000) {
       // handle overflow: not press the button
       reaction = 6000;
 
       timing = false;
-      reactionTime[count] = reaction; // 記錄反應時間
+      reactionTime[count] = reaction;  // 記錄反應時間
       pReactionCh->setValue((uint8_t *)&reaction, sizeof(reaction));
       pReactionCh->notify();
 
@@ -127,8 +138,6 @@ void loop() {
 
       count++;
     }
-
-    delay(1000);  // 停止一秒鐘以避免錯誤的按鈕觸發
   }
 
   if (count == NUM_REACTIONS) {
@@ -156,7 +165,42 @@ void endGame() {
     delay(3);
   }
 
-  while (true) {}  // 結束程式
+  leds[0] = CRGB::Yellow;
+  FastLED.show();
+  while (true) {
+    // 等待按鈕按下
+    if (digitalRead(buttonPin) == HIGH) {
+      delay(500);
+      resetGame();
+      delay(1000);
+      break;
+    }
+  }
+}
+
+void resetWebValue() {
+  pStartgameCh->setValue("1");
+  pStartgameCh->notify();
+}
+
+void resetGame() {
+  Serial.println("Resetting game...");
+
+  count = 0;
+  for (int i = 0; i < NUM_REACTIONS; i++) {
+    reactionTime[i] = 0;
+  }
+
+  gameStarted = false;
+  timing = false;
+
+  digitalWrite(ledPin, LOW);
+  leds[0] = CRGB::Blue;
+  FastLED.show();
+  Serial.println("Game reset.");
+
+  // TODO: notify the reset to the client
+  resetWebValue();
 }
 
 // char *concatenateReactionTimes() {
