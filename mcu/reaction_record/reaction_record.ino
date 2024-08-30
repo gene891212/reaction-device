@@ -13,7 +13,7 @@
 #define DATA_PIN 21
 
 #define NUM_REACTIONS 10  // 定義10次數據的數量
-#define REPORTING_PERIOD_MS 2000
+#define REPORTING_PERIOD_MS 1000
 
 CRGB leds[NUM_LEDS];
 
@@ -31,6 +31,9 @@ uint32_t tsLastReport = 0;
 extern BLECharacteristic *pReactionCh;
 extern BLECharacteristic *pMax3010xCh;
 extern BLECharacteristic *pStartgameCh;
+
+extern PulseOximeter pox;
+
 
 void setup() {
   Serial.begin(115200);
@@ -65,6 +68,8 @@ void setup() {
 }
 
 void loop() {
+  pox.update();
+
   if (millis() - tsLastReport > REPORTING_PERIOD_MS) {
     // for (int i = 0; i < NUM_REACTIONS; i++) {
     //   pReactionCh->setValue((uint8_t *)&reactionTime[i], 4);

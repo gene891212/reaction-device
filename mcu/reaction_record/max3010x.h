@@ -46,36 +46,28 @@ void setupMax3010x() {
     for (;;)
       ;
   }
+  pox.setIRLedCurrent(MAX30100_LED_CURR_7_6MA);
 
   // Register a callback for the beat detection
   // pox.setOnBeatDetectedCallback(onBeatDetected);
 }
 
 void getMax3010x(int* data) {
-  // Make sure to call update as fast as possible
-  pox.update();
+  int heartrate = pox.getHeartRate() / 2;
+  int spo2 = pox.getSpO2();
+
+  if (heartrate < 50) {
+    heartrate = 60;
+  }
+  if (spo2 == 0) {
+    heartrate = 0;
+  }
+  data[0] = heartrate;
+  data[1] = spo2;
 
   Serial.print("Heart rate:");
-  Serial.print(pox.getHeartRate());
+  Serial.print(heartrate);
   Serial.print("bpm / SpO2:");
-  Serial.print(pox.getSpO2());
+  Serial.print(spo2);
   Serial.println("%");
-  // int heartrate = pox.getHeartRate();
-  // int spo2 = pox.getSpO2();
-  // data[0] = heartrate;
-  // data[1] = spo2;
-
-  // // Asynchronously dump heart rate and oxidation levels to the serial
-  // // For both, a value of 0 means "invalid"
-  // if (millis() - tsLastReport > REPORTING_PERIOD_MS) {
-  //   Serial.print("Heart rate:");
-  //   Serial.print(pox.getHeartRate());
-  //   Serial.print("bpm / SpO2:");
-  //   Serial.print(pox.getSpO2());
-  //   Serial.println("%");
-
-  //   tsLastReport = millis();
-  // }
-  // data[0] = random(60, 100);
-  // data[1] = random(90, 100);
 }
